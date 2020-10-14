@@ -7,7 +7,7 @@ class User(db.Model):
     password = db.Column(db.String(100))
     name = db.Column(db.String(1000))
     authenticated = db.Column(db.Boolean, default=True)
-
+    current_record = db.Column(db.String(30), unique=True, default=None)
 
     def is_active(self):
         """True, as all users are active."""
@@ -24,3 +24,6 @@ class User(db.Model):
     def is_anonymous(self):
         """False, as anonymous users aren't supported."""
         return False
+
+    def get_session(self):
+        return self.current_record

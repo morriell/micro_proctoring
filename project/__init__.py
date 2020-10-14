@@ -11,6 +11,10 @@ def create_app():
     app = Flask(__name__)
     configure_app(app)
     db.init_app(app)
+    if (os.path.exists(app.config['STORAGE_PATH'])):
+        print('Storage already exists.')
+    else:
+        os.mkdir(app.config['STORAGE_PATH'])
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'

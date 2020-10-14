@@ -10,10 +10,12 @@ class BaseConfig(object):
     DEBUG = False
     SECURITY_PASSWORD_SALT = 'secret_key2'
     SQLALCHEMY_DATABASE_URI = 'sqlite:///db.sqlite'
+    STORAGE_PATH = './storage'
 
 class DevelopConfig(BaseConfig):
     SERVER_NAME = 'localhost:5000'
     APPLICATION_ROOT = ''
     DEBUG = True
+    STORAGE_PATH = './storage'
 
 

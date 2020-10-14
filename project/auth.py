@@ -1,9 +1,14 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
-from flask_login import login_user, logout_user, login_required
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
+from flask import current_app as app
+from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User
 from . import db
 from flask_login import login_user
+from datetime import datetime
+from random import choice
+from string import digits, ascii_letters
+import os
 
 auth = Blueprint('auth', __name__)
 
@@ -63,6 +68,39 @@ def signup_post():
 @auth.route('/recieve_photo', methods=['POST'])
 @login_required
 def recieve_photo():
+    name_length = 30
+    if (current_user.current_record == None):
+        # start record
+        folder = generate_random_string(name_length)
+        while(os.path.exists(app.config['STORAGE_PATH'] + '/' + folder)):
+            folder = generate_random_string(name_length)
+        full_folder_name = app.config['STORAGE_PATH'] + '/' + folder
+        os.mkdir(full_folder_name)
+
+        # update DB
+        User.query.filter_by(id=current_user.id).update(dict(current_record=folder))
+        db.session.commit()
+
+    else:
+        full_folder_name = app.config['STORAGE_PATH'] + '/' + current_user.current_record
+
     """ post image and return the response """
-    request.files['photo'].save('my_test_img.png')
+    img_name = full_folder_name + '/' + datetime.now().isoformat() + '.png'
+    print('NEW PHOTO '+ img_name)
+    request.files['photo'].save(img_name)
+    print('SAVED')
     return jsonify(status="success")
+
+@auth.route('/stop_record')
+@login_required
+def stop_record():
+    link = app.config['STORAGE_PATH'] + '/' + user.current_record
+    User.query.filter_by(id=current_user.id).update(dict(current_record=None))
+    db.session.commit()
+    return render_template('stop_record.html', link = link)
+
+
+def generate_random_string(length):
+    symbols = ascii_letters + digits
+    return ''.join(choice(symbols) for i in range(length))
+
