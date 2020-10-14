@@ -68,9 +68,20 @@ def signup_post():
 @auth.route('/recieve_photo', methods=['POST'])
 @login_required
 def recieve_photo():
+    if (current_user.current_record == None):
+        return jsonify(status='error', err_text='no_session')
+    full_folder_name = app.config['STORAGE_PATH'] + '/' + current_user.current_record
+
+    """ post image and return the response """
+    img_name = full_folder_name + '/' + datetime.now().isoformat() + '.png'
+    request.files['photo'].save(img_name)
+    return jsonify(status="success")
+
+@auth.route('/start_record')
+@login_required
+def start_record():
     name_length = 30
     if (current_user.current_record == None):
-        # start record
         folder = generate_random_string(name_length)
         while(os.path.exists(app.config['STORAGE_PATH'] + '/' + folder)):
             folder = generate_random_string(name_length)
@@ -80,16 +91,9 @@ def recieve_photo():
         # update DB
         User.query.filter_by(id=current_user.id).update(dict(current_record=folder))
         db.session.commit()
-
     else:
-        full_folder_name = app.config['STORAGE_PATH'] + '/' + current_user.current_record
-
-    """ post image and return the response """
-    img_name = full_folder_name + '/' + datetime.now().isoformat() + '.png'
-    print('NEW PHOTO '+ img_name)
-    request.files['photo'].save(img_name)
-    print('SAVED')
-    return jsonify(status="success")
+        return jsonify(status="error", err_text='record_exists')
+    return jsonify(status="success", session=folder)
 
 @auth.route('/stop_record')
 @login_required
@@ -97,8 +101,7 @@ def stop_record():
     link = app.config['STORAGE_PATH'] + '/' + user.current_record
     User.query.filter_by(id=current_user.id).update(dict(current_record=None))
     db.session.commit()
-    return render_template('stop_record.html', link = link)
-
+    return render_template('stop_record.html', link=link)
 
 def generate_random_string(length):
     symbols = ascii_letters + digits
