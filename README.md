@@ -71,7 +71,7 @@ Now you can check `localhost:500` for the app
 - [x] Create a method to accept pictures and store them. Name of a picture should be a timestamp
 - [x] Create a method to finish record session
 - [ ] Create a page to show artifacts
-- [ ] Create a separate table for sessions
+- [x] Create a separate table for sessions
 - [ ] Make an archive from fotos, place a timastamp file nearby and return a link to this folder after record was stopped
 - [ ] Create a script that removes outdated records
 - [ ] Translate all menus etc
