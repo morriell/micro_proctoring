@@ -52,3 +52,10 @@ def generate_random_string(length):
     symbols = ascii_letters + digits
     return ''.join(choice(symbols) for i in range(length))
 
+@record.route('/download/<id>')
+def downlpad_artifacts(id):
+    full_path = app.config['STORAGE_PATH'] + '/' + id
+    #filename=???
+    if (not os.path.exists(full_path)):
+        return jsonify(status='error')
+    return send_from_directory(directory=full_path, filename=filename, as_attachment=True)
