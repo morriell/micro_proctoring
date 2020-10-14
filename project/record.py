@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, url_for, request, jsonify
 from flask import current_app as app
 from flask_login import login_required, current_user
-from .models import User
+from .models import User, Sessions
 from . import db
 from datetime import datetime
 from random import choice
@@ -13,9 +13,10 @@ record = Blueprint('record', __name__)
 @record.route('/recieve_photo', methods=['POST'])
 @login_required
 def recieve_photo():
-    if (current_user.current_record == None):
+    session = Sessions.query.filter_by(user=current_user.id).first()
+    if (session is None):
         return jsonify(status='error', err_text='no_session')
-    full_folder_name = app.config['STORAGE_PATH'] + '/' + current_user.current_record
+    full_folder_name = app.config['STORAGE_PATH'] + '/' + session.session
 
     """ post image and return the response """
     img_name = full_folder_name + '/' + datetime.now().isoformat() + '.png'
@@ -26,7 +27,9 @@ def recieve_photo():
 @login_required
 def start_record():
     name_length = 30
-    if (current_user.current_record == None):
+    user = current_user.id
+    current_session = Sessions.query.filter_by(user=user).first()
+    if (current_session is None):
         folder = generate_random_string(name_length)
         while(os.path.exists(app.config['STORAGE_PATH'] + '/' + folder)):
             folder = generate_random_string(name_length)
@@ -34,7 +37,8 @@ def start_record():
         os.mkdir(full_folder_name)
 
         # update DB
-        User.query.filter_by(id=current_user.id).update(dict(current_record=folder))
+        new_session = Sessions(user=user, session=folder)
+        db.session.add(new_session)
         db.session.commit()
     else:
         return jsonify(status="error", err_text='record_exists')
@@ -43,8 +47,12 @@ def start_record():
 @record.route('/stop_record')
 @login_required
 def stop_record():
-    link = app.config['STORAGE_PATH'] + '/' + user.current_record
-    User.query.filter_by(id=current_user.id).update(dict(current_record=None))
+    session = Sessions.query.filter_by(user=current_user.id).first()
+    if (session is None):
+        return jsonify(status='error')
+    link = app.config['STORAGE_PATH'] + '/' + session.session
+
+    db.session.delete(session)
     db.session.commit()
     return render_template('stop_record.html', link=link)
 
