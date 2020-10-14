@@ -60,16 +60,9 @@ def signup_post():
 
     return redirect(url_for('auth.login'))
 
-@auth.route('/recivephoto', methods=['POST'])
+@auth.route('/recieve_photo', methods=['POST'])
 @login_required
 def recieve_photo():
-    print('HERE I AM')
-    img_name='test_img.png'
-
-    print(request.files.keys)
-    img = request.files[img_name]
-    #req = request
-    #nparr = np.fromstring(req.data, np.uint8)
-    #img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    img.save(img_name)
+    """ post image and return the response """
+    request.files['photo'].save('my_test_img.png')
     return jsonify(status="success")

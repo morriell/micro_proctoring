@@ -31,10 +31,11 @@
     );
 
     console.log(blob);
-
-    var response = await fetch("/recivephoto", {
+    var formData = new FormData();
+    formData.append('photo', blob)
+    var response = await fetch("/recieve_photo", {
       method: "POST",
-      body: blob,
+      body: formData,
     });
 
     console.log(response);
