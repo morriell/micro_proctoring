@@ -61,10 +61,13 @@ Now you can check `localhost:500` for the app
 ## ToDo
 
 - [ ] Replace profile page with relevant one
+- [ ] Replace css with a local one
+- [ ] Send photoes using ajax POST
 - [ ] Create a method to start the record session. May be add a new field to DB
 - [ ] Create a method to accept pictures and store them. Name of a picture should be a timestamp
 - [ ] Create a method to finish record session: make an archive from fotos, place a timastamp file nearby and return a link to this folder
 - [ ] Create a script that removes outdated records
 - [ ] Translate all menus etc
+- [ ] Write some instructions for users
 - [ ] Add deployment configs
 - [ ] Add e-mail based authorization
