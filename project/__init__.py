@@ -35,6 +35,10 @@ def create_app():
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
+    # blueprint for records
+    from .record import record as record_blueprint
+    app.register_blueprint(record_blueprint)
+
     return app
 
 def configure_app(app):
