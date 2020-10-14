@@ -1,17 +1,17 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+import os
+import config
 
 # init SQLAlchemy so we can use it later in our models
 db = SQLAlchemy()
 
 def create_app():
     app = Flask(__name__)
-
-    app.config['SECRET_KEY'] = 'secret-key-goes-here'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
-
+    configure_app(app)
     db.init_app(app)
+
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
@@ -32,3 +32,15 @@ def create_app():
     app.register_blueprint(main_blueprint)
 
     return app
+
+def configure_app(app):
+    config_names = {
+        "base": "config.BaseConfig",
+        "dev": "config.DevelopConfig"
+    }
+
+    try:
+        app.config.from_object(config_names[os.getenv("CONF_NAME", "base")])
+    except LookupError:
+        print("Invalid configuration name. Use 'base' instead.")
+        app.config.from_object(config_name['base'])
