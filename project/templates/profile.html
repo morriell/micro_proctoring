@@ -1,7 +1,48 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
+<h1 class="title">Welcome, {{ name }}</h1>
 
-{% block content %}
-<h1 class="title">
-  Welcome, {{ name }}
-</h1>
+<video id="video" width="640" height="480" autoplay></video>
+<button id="snap">Сделать снимок</button>
+<canvas id="canvas" width="640" height="480"></canvas>
+
+<script type="text/javascript">
+  var video = document.getElementById("video");
+
+  // Получаем доступ к камере
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    // Не включаем аудио опцией `{ audio: true }` поскольку сейчас мы работаем только с изображениями
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then(function (stream) {
+        video.srcObject = stream;
+        //video.play();
+      });
+  }
+
+  var canvas = document.getElementById("canvas");
+  var context = canvas.getContext("2d");
+  //var video = document.getElementById('video');
+
+  // Обработчик события нажатия на кнопку "Сделать снимок"
+  document.getElementById("snap").addEventListener("click", async function () {
+    context.drawImage(video, 0, 0, 640, 480);
+    var blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/png")
+    );
+
+    console.log(blob);
+
+    var response = await fetch("/recivephoto", {
+      method: "POST",
+      body: blob,
+    });
+
+    console.log(response);
+    //   var base64dataUrl = canvas.toDataURL("image/png");
+
+    //   var img = new Image();
+    //   img.src = base64dataUrl;
+    //   window.document.body.appendChild(img);
+  });
+</script>
 {% endblock %}
