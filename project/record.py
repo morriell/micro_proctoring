@@ -7,16 +7,18 @@ from datetime import datetime
 from random import choice
 from string import digits, ascii_letters
 import os
+from shutil import make_archive, rmtree
+from hashlib import sha224
 
 record = Blueprint('record', __name__)
 
 @record.route('/recieve_photo', methods=['POST'])
 @login_required
 def recieve_photo():
-    session = Sessions.query.filter_by(user=current_user.id).first()
-    if (session is None):
+    current_session = Sessions.query.filter_by(user=current_user.id, stop=None).first()
+    if (current_session is None):
         return jsonify(status='error', err_text='no_session')
-    full_folder_name = app.config['STORAGE_PATH'] + '/' + session.session
+    full_folder_name = app.config['STORAGE_PATH'] + '/' + current_session.session
 
     """ post image and return the response """
     img_name = full_folder_name + '/' + datetime.now().isoformat() + '.png'
@@ -28,7 +30,7 @@ def recieve_photo():
 def start_record():
     name_length = 30
     user = current_user.id
-    current_session = Sessions.query.filter_by(user=user).first()
+    current_session = Sessions.query.filter_by(user=user, stop=None).first()
     if (current_session is None):
         folder = generate_random_string(name_length)
         while(os.path.exists(app.config['STORAGE_PATH'] + '/' + folder)):
@@ -37,7 +39,7 @@ def start_record():
         os.mkdir(full_folder_name)
 
         # update DB
-        new_session = Sessions(user=user, session=folder)
+        new_session = Sessions(user=user, session=folder, start=datetime.utcnow())
         db.session.add(new_session)
         db.session.commit()
     else:
@@ -47,20 +49,24 @@ def start_record():
 @record.route('/stop_record')
 @login_required
 def stop_record():
-    session = Sessions.query.filter_by(user=current_user.id).first()
-    if (session is None):
+    session_data = Sessions.query.filter_by(user=current_user.id, stop=None).first()
+    if (session_data is None):
         return jsonify(status='error')
-    folder_id = session.session
+    folder_id = session_data.session
     path = app.config['STORAGE_PATH'] + '/' + folder_id
 
-    db.session.delete(session)
+    # Make an archive
+    os.system('zip -rm '+ path + '.zip ' + path)
+
+    checksum = sha224(file_as_bytes(open(path+'.zip', 'rb'))).hexdigest()
+
+    # Update DB
+    session_data.stop = datetime.utcnow()
+    session_data.checksum = checksum
     db.session.commit()
 
-    # Make a crypted archive
-    os.system("gpgtar -s -o " + path + ".tar " + path)
-    os.system("rm -rf " + path)
     link = url_for('record.download', id=folder_id)
-    return render_template('stop_record.html', link=link)
+    return render_template('stop_record.html', link=link, hash_sum=checksum)
 
 def generate_random_string(length):
     symbols = ascii_letters + digits
@@ -68,9 +74,12 @@ def generate_random_string(length):
 
 @record.route('/download/<id>')
 def download(id):
-    filename = id + '.tar'
+    filename = id + '.zip'
     full_path = os.path.join(app.root_path, "../" + app.config['STORAGE_PATH'])
-    print(full_path)
     if (not os.path.exists(full_path)):
         return jsonify(status='error')
     return send_from_directory(directory=full_path, filename=filename, as_attachment=True)
+
+def file_as_bytes(file):
+    with file:
+        return file.read()

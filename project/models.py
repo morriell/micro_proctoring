@@ -7,11 +7,11 @@ class User(db.Model):
     password = db.Column(db.String(100))
     name = db.Column(db.String(1000))
     authenticated = db.Column(db.Boolean, default=True)
-    current_record = db.Column(db.String(30), unique=True, default=None)
+    active = db.Column(db.Boolean, default=True)
 
     def is_active(self):
         """True, as all users are active."""
-        return True
+        return self.active
 
     def get_id(self):
         """Return the email address to satisfy Flask-Login's requirements."""
@@ -32,11 +32,7 @@ class Sessions(db.Model):
     id = db.Column(db.Integer, primary_key=True) # primary keys are required by SQLAlchemy
     user = db.Column(db.Integer, db.ForeignKey(User.id))
     session = db.Column(db.String(30), unique=True, default=None)
-
-class Records(db.Model):
-    id = db.Column(db.Integer, primary_key=True) # primary keys are required by SQLAlchemy
-    user = db.Column(db.Integer, db.ForeignKey(User.id))
-    started = db.Column(db.DateTime)
-    stopped = db.Column(db.DateTime)
-    expire_date = db.Column(db.DateTime)
+    start = db.Column(db.DateTime)
+    stop = db.Column(db.DateTime)
+    checksum = db.Column(db.String(100))
 
