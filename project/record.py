@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, url_for, request, jsonify
+from flask import Blueprint, render_template, url_for, request, jsonify, send_from_directory
 from flask import current_app as app
 from flask_login import login_required, current_user
 from .models import User, Sessions
@@ -50,10 +50,16 @@ def stop_record():
     session = Sessions.query.filter_by(user=current_user.id).first()
     if (session is None):
         return jsonify(status='error')
-    link = app.config['STORAGE_PATH'] + '/' + session.session
+    folder_id = session.session
+    path = app.config['STORAGE_PATH'] + '/' + folder_id
 
     db.session.delete(session)
     db.session.commit()
+
+    # Make a crypted archive
+    os.system("gpgtar -s -o " + path + ".tar " + path)
+    os.system("rm -rf " + path)
+    link = url_for('record.download', id=folder_id)
     return render_template('stop_record.html', link=link)
 
 def generate_random_string(length):
@@ -61,9 +67,10 @@ def generate_random_string(length):
     return ''.join(choice(symbols) for i in range(length))
 
 @record.route('/download/<id>')
-def downlpad_artifacts(id):
-    full_path = app.config['STORAGE_PATH'] + '/' + id
-    #filename=???
+def download(id):
+    filename = id + '.tar'
+    full_path = os.path.join(app.root_path, "../" + app.config['STORAGE_PATH'])
+    print(full_path)
     if (not os.path.exists(full_path)):
         return jsonify(status='error')
     return send_from_directory(directory=full_path, filename=filename, as_attachment=True)
