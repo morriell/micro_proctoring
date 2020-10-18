@@ -9,6 +9,7 @@ from string import digits, ascii_letters
 import os
 from shutil import make_archive, rmtree
 from hashlib import sha224
+from re import match
 
 record = Blueprint('record', __name__)
 
@@ -33,7 +34,7 @@ def recieve_photo():
     full_folder_name = app.config['STORAGE_PATH'] + '/' + current_session.session
 
     """ post image and return the response """
-    img_name = full_folder_name + '/' + datetime.now().strftime('$S-%M-%H-%d-%m-%y') + '.png'
+    img_name = full_folder_name + '/' + datetime.now().strftime('%H-%M-%S-%d%m%y') + '.png'
     request.files['photo'].save(img_name)
     return jsonify(status="success")
 
@@ -66,31 +67,40 @@ def stop_record():
         return jsonify(status='error')
     folder_id = session_data.session
     path = app.config['STORAGE_PATH'] + '/' + folder_id
+    archive_name = path + '/' + current_user.name \
+                   + '-' + datetime.now().strftime('%M-%H-%d%m%y')\
+                   + '.zip'
 
     # Make an archive
-    os.system('zip -rm '+ path + '.zip ' + path)
+    os.system('zip -rm ' + archive_name + ' ' + path + '/*')
 
-    checksum = sha224(file_as_bytes(open(path+'.zip', 'rb'))).hexdigest()
+    checksum = sha224(file_as_bytes(open(archive_name, 'rb'))).hexdigest()
 
     # Update DB
     session_data.stop = datetime.utcnow()
     session_data.checksum = checksum
     db.session.commit()
 
-    link = url_for('record.download', id=folder_id)
+    link = url_for('record.download', folder_name=folder_id)
     return jsonify(status='success', link=link, hash_sum=checksum)
 
 def generate_random_string(length):
     symbols = ascii_letters + digits
     return ''.join(choice(symbols) for i in range(length))
 
-@record.route('/download/<id>')
-def download(id):
-    filename = id + '.zip'
-    full_path = os.path.join(app.root_path, "../" + app.config['STORAGE_PATH'])
+@record.route('/download/<folder_name>')
+def download(folder_name):
+    path = os.path.join(app.root_path, '../', app.config['STORAGE_PATH'], folder_name)
+    files = []
+    print(os.listdir(path))
+    for f in os.listdir(path):
+        if (match(r'.*\.zip', f)):
+            files.append(f)
+    print(files)
+    full_path = os.path.join(path, files[0])
     if (not os.path.exists(full_path)):
         return jsonify(status='error')
-    return send_from_directory(directory=full_path, filename=filename, as_attachment=True)
+    return send_from_directory(directory=path, filename=files[0], as_attachment=True)
 
 def file_as_bytes(file):
     with file:
