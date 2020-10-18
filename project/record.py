@@ -12,6 +12,18 @@ from hashlib import sha224
 
 record = Blueprint('record', __name__)
 
+@record.route('/profile')
+@login_required
+def profile():
+    session=''
+    session_data = Sessions.query.filter_by(user=current_user.id, stop=None).first()
+    if(session_data is not None):
+        session=session_data.session
+        session_data.stop = datetime.utcnow()
+        session_data.comment = 'Closed due to page reload'
+        db.session.commit()
+    return render_template('profile.html', name=current_user.name, session=session)
+
 @record.route('/recieve_photo', methods=['POST'])
 @login_required
 def recieve_photo():
@@ -21,7 +33,7 @@ def recieve_photo():
     full_folder_name = app.config['STORAGE_PATH'] + '/' + current_session.session
 
     """ post image and return the response """
-    img_name = full_folder_name + '/' + datetime.now().isoformat() + '.png'
+    img_name = full_folder_name + '/' + datetime.now().strftime('$S-%M-%H-%d-%m-%y') + '.png'
     request.files['photo'].save(img_name)
     return jsonify(status="success")
 
@@ -66,7 +78,7 @@ def stop_record():
     db.session.commit()
 
     link = url_for('record.download', id=folder_id)
-    return render_template('stop_record.html', link=link, hash_sum=checksum)
+    return jsonify(status='success', link=link, hash_sum=checksum)
 
 def generate_random_string(length):
     symbols = ascii_letters + digits

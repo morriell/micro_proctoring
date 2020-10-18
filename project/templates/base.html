@@ -101,7 +101,7 @@
                   Главная
                 </a>
                 {% if current_user.is_authenticated %}
-                <a href="{{ url_for('main.profile') }}" class="navbar-item">
+                <a href="{{ url_for('record.profile') }}" class="navbar-item">
                   Профиль
                 </a>
                 {% endif %} {% if not current_user.is_authenticated %}

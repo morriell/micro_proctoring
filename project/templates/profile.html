@@ -1,5 +1,8 @@
 {% extends "base.html" %} {% block content %}
 <h1 class="title">Welcome, {{ name }}</h1>
+{% if session != '' %}
+    Предыдущая сессия была звершена.
+{% endif %}
 
 <canvas
   id="canvas"

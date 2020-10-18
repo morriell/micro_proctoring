@@ -9,11 +9,6 @@ main = Blueprint('main', __name__)
 def index():
     return render_template('index.html')
 
-@main.route('/profile')
-@login_required
-def profile():
-    return render_template('profile.html', name=current_user.name)
-
 @main.route('/check')
 def check():
     return render_template('check.html')

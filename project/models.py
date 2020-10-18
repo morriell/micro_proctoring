@@ -35,4 +35,5 @@ class Sessions(db.Model):
     start = db.Column(db.DateTime)
     stop = db.Column(db.DateTime)
     checksum = db.Column(db.String(100))
+    comment = db.Column(db.String(100))
 
