@@ -1,12 +1,42 @@
 {% extends "base.html" %} {% block content %}
 <h1 class="title">Welcome, {{ name }}</h1>
 
-<video id="video" width="640" height="480" autoplay></video>
-<button id="snap">Сделать снимок</button>
-<canvas id="canvas" width="640" height="480"></canvas>
+<canvas
+  id="canvas"
+  width="640"
+  height="480"
+  style="z-index: -10; position: absolute"
+></canvas>
+
+<div class="container">
+  <div class="video">
+    <video id="video" width="640" height="480" autoplay></video>
+  </div>
+
+  <div id="btnRecord" class="button button--record button--active">
+    <div class="icon-wrapper icon-wrapper--record">
+      <img class="button__icon" src="static/record.png" alt="recornBtn" />
+    </div>
+    <div class="button__text">Начать запись</div>
+  </div>
+
+  <div id="btnStop" class="button button--stop">
+    <div class="icon-wrapper icon-wrapper--stop">
+      <img class="button__icon" src="static/stop.png" alt="stopBtn" />
+    </div>
+    <div class="button__text">Завершить</div>
+  </div>
+
+  <div id="message" class="message">Ссылка</div>
+</div>
 
 <script type="text/javascript">
   var video = document.getElementById("video");
+
+  function toggle() {
+    btnRecord.classList.toggle("button--active");
+    btnStop.classList.toggle("button--active");
+  }
 
   // Получаем доступ к камере
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -21,29 +51,51 @@
 
   var canvas = document.getElementById("canvas");
   var context = canvas.getContext("2d");
-  //var video = document.getElementById('video');
 
+  var screenShots;
   // Обработчик события нажатия на кнопку "Сделать снимок"
-  document.getElementById("snap").addEventListener("click", async function () {
-    context.drawImage(video, 0, 0, 640, 480);
-    var blob = await new Promise((resolve) =>
-      canvas.toBlob(resolve, "image/png")
-    );
-
-    console.log(blob);
-    var formData = new FormData();
-    formData.append('photo', blob)
-    var response = await fetch("/recieve_photo", {
-      method: "POST",
-      body: formData,
+  document
+    .getElementById("btnRecord")
+    .addEventListener("click", async function () {
+      toggle();
+      var responseFirst = await fetch("/start_record", {
+        method: "GET",
+      });
+      if (responseFirst.ok) {
+        var result = await responseFirst.json();
+        screenShots = setInterval(async function () {
+          context.drawImage(video, 0, 0, 640, 480);
+          var blob = await new Promise((resolve) =>
+            canvas.toBlob(resolve, "image/png")
+          );
+          var formData = new FormData();
+          formData.append("photo", blob);
+          var response = await fetch("/recieve_photo", {
+            method: "POST",
+            body: formData,
+          });
+        }, 2000);
+      }
     });
 
-    console.log(response);
-    //   var base64dataUrl = canvas.toDataURL("image/png");
+  document
+    .getElementById("btnStop")
+    .addEventListener("click", async function () {
+      toggle();
+      var responseSecond = await fetch("/stop_record", {
+        method: "GET",
+      });
+      if (responseSecond.ok) {
+        clearInterval(screenShots);
+        var result = await responseSecond.json();
+        console.log(result);
 
-    //   var img = new Image();
-    //   img.src = base64dataUrl;
-    //   window.document.body.appendChild(img);
-  });
+        var message = document.getElementById("message");
+        var link = document.createElement("a");
+        link.innerHTML = result.link;
+        link.href = result.link;
+        message.append(link);
+      }
+    });
 </script>
 {% endblock %}
