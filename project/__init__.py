@@ -1,8 +1,11 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-import os
+from os import path, mkdir, getenv
 import config
+from atexit import register
+from shutil import rmtree
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # init SQLAlchemy so we can use it later in our models
 db = SQLAlchemy()
@@ -11,10 +14,10 @@ def create_app():
     app = Flask(__name__)
     configure_app(app)
     db.init_app(app)
-    if (os.path.exists(app.config['STORAGE_PATH'])):
+    if (path.exists(app.config['STORAGE_PATH'])):
         print('Storage already exists.')
     else:
-        os.mkdir(app.config['STORAGE_PATH'])
+        mkdir(app.config['STORAGE_PATH'])
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
@@ -39,6 +42,14 @@ def create_app():
     from .record import record as record_blueprint
     app.register_blueprint(record_blueprint)
 
+    # Schedule daily cleanup
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=cleanup, args=[app.config['STORAGE_PATH']], trigger='cron', hour='2')
+    scheduler.start()
+
+    # Shut down the scheduler when exiting the app
+    register(lambda: scheduler.shutdown())
+
     return app
 
 def configure_app(app):
@@ -48,7 +59,10 @@ def configure_app(app):
     }
 
     try:
-        app.config.from_object(config_names[os.getenv("CONF_NAME", "base")])
+        app.config.from_object(config_names[getenv("CONF_NAME", "base")])
     except LookupError:
         print("Invalid configuration name. Use 'base' instead.")
         app.config.from_object(config_name['base'])
+
+def cleanup(storage):
+    return rmtree(storage + '/*')

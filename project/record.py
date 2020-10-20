@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from random import choice
 from string import digits, ascii_letters
 import os
-from shutil import make_archive, rmtree
 from hashlib import sha224
 from re import match
 
