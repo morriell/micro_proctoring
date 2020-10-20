@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, url_for, request, jsonify, send_from_directory
+from flask import Blueprint, render_template, url_for, request, jsonify, send_from_directory, redirect
 from flask import current_app as app
 from flask_login import login_required, current_user
 from .models import User, Sessions
 from . import db
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import choice
 from string import digits, ascii_letters
 import os
@@ -31,11 +31,20 @@ def recieve_photo():
     current_session = Sessions.query.filter_by(user=current_user.id, stop=None).first()
     if (current_session is None):
         return jsonify(status='error', err_text='no_session')
+
+    time_left = current_session.start \
+                + timedelta(seconds=app.config['MAX_RECORD_LENGTH']) \
+                - datetime.now()
     full_folder_name = app.config['STORAGE_PATH'] + '/' + current_session.session
 
-    """ post image and return the response """
+    # Save image
     img_name = full_folder_name + '/' + datetime.now().strftime('%H-%M-%S-%d%m%y') + '.png'
     request.files['photo'].save(img_name)
+
+    # Restrict maximum record length
+    if(time_left <= timedelta(seconds=1)):
+        return redirect(url_for('record.stop_record'))
+
     return jsonify(status="success")
 
 @record.route('/start_record')
@@ -57,7 +66,10 @@ def start_record():
         db.session.commit()
     else:
         return jsonify(status="error", err_text='record_exists')
-    return jsonify(status="success", session=folder)
+    return jsonify(status="success",
+                   session=folder,
+                   min_gap=app.config['PHOTO_MIN_GAP'],
+                   max_gap=app.config['PHOTO_MAX_GAP'])
 
 @record.route('/stop_record')
 @login_required
@@ -81,12 +93,11 @@ def stop_record():
     session_data.checksum = checksum
     db.session.commit()
 
-    link = url_for('record.download', folder_name=folder_id)
-    return jsonify(status='success', link=link, hash_sum=checksum)
+    link = app.config['SERVER_NAME'] \
+           + url_for('record.download', folder_name=folder_id)
+    print('LINK ' + link)
 
-def generate_random_string(length):
-    symbols = ascii_letters + digits
-    return ''.join(choice(symbols) for i in range(length))
+    return jsonify(status='success', link=link, hash_sum=checksum)
 
 @record.route('/download/<folder_name>')
 def download(folder_name):
@@ -100,7 +111,13 @@ def download(folder_name):
     full_path = os.path.join(path, files[0])
     if (not os.path.exists(full_path)):
         return jsonify(status='error')
-    return send_from_directory(directory=path, filename=files[0], as_attachment=True)
+    return send_from_directory(directory=path,
+                               filename=files[0],
+                               as_attachment=True)
+
+def generate_random_string(length):
+    symbols = ascii_letters + digits
+    return ''.join(choice(symbols) for i in range(length))
 
 def file_as_bytes(file):
     with file:
