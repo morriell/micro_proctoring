@@ -61,19 +61,19 @@ Now you can check `localhost:500` for the app
 ## ToDo
 
 - [x] Replace profile page with relevant one
-- [ ] Create start and stop record buttons
-- [ ] Update a page with link to the record done (redirect after stop record)
+- [x] Create start and stop record buttons
+- [x] Update a page with link to the record done (redirect after stop record)
 - [ ] Replace css with a local one
-- [ ] Add a timer to recieve_photo method. The timer returns time left till the max session length
+- [x] Add a timer to recieve_photo method. The timer returns time left till the max session length
 - [ ] Show the timer if less then 30 min left
 - [x] Send photoes using ajax POST
 - [x] Create a method to start the record session. May be add a new field to DB
 - [x] Create a method to accept pictures and store them. Name of a picture should be a timestamp
 - [x] Create a method to finish record session
-- [ ] Create a page to show artifacts
+- [x] Create a page to show artifacts
 - [x] Create a separate table for sessions
-- [ ] Make an archive from fotos, place a timastamp file nearby and return a link to this folder after record was stopped
-- [ ] Create a script that removes outdated records
+- [x] Make an archive from fotos, place a timastamp file nearby and return a link to this folder after record was stopped
+- [x] Create a script that removes outdated records
 - [ ] Translate all menus etc
 - [ ] Write some instructions for users
 - [ ] Add deployment configs
