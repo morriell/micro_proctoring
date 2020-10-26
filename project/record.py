@@ -41,8 +41,11 @@ def recieve_photo():
     request.files['photo'].save(img_name)
 
     # Restrict maximum record length
-    if(time_left <= timedelta(seconds=1)):
-        return redirect(url_for('record.stop_record'))
+    #if(time_left <= timedelta(seconds=1)):
+    #    print('time left ' + time_left)
+    #    print('timedelta ' + timedelta(seconds=1))
+    #    print('TIME IS OVER')
+    #    return redirect(url_for('record.stop_record'))
 
     return jsonify(status="success")
 
@@ -75,6 +78,7 @@ def start_record():
 def stop_record():
     session_data = Sessions.query.filter_by(user=current_user.id, stop=None).first()
     if (session_data is None):
+        print('ERERRR')
         return jsonify(status='error')
     folder_id = session_data.session
     path = app.config['STORAGE_PATH'] + '/' + folder_id
@@ -95,6 +99,7 @@ def stop_record():
     link = app.config['SERVER_NAME'] \
            + url_for('record.download', folder_name=folder_id)
     print('LINK ' + link)
+    print('HASH ' + checksum)
 
     return jsonify(status='success', link=link, hash_sum=checksum)
 
