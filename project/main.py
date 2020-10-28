@@ -35,3 +35,7 @@ def check_hash(checksum):
                    stop_date=stop_date,
                    stop_time=stop_time,
                    user_name=user.name)
+
+@main.route('/how_it_works')
+def how_it_works():
+    return render_template('how_it_works.html')
