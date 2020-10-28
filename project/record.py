@@ -96,8 +96,7 @@ def stop_record():
     session_data.checksum = checksum
     db.session.commit()
 
-    link = app.config['SERVER_NAME'] \
-           + url_for('record.download', folder_name=folder_id)
+    link = url_for('record.download', folder_name=folder_id, _external=True)
     print('LINK ' + link)
     print('HASH ' + checksum)
 
