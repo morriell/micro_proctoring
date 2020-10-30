@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-from os import path, mkdir, getenv
+from os import path, mkdir, getenv, listdir
 import config
 from atexit import register
 from shutil import rmtree
@@ -14,10 +14,12 @@ def create_app():
     app = Flask(__name__)
     configure_app(app)
     db.init_app(app)
-    if (path.exists(app.config['STORAGE_PATH'])):
-        print('Storage already exists.')
+    storage = app.config['STORAGE_PATH']
+    if (path.exists(storage)):
+        print('Storage ' + storage + ' already exists.')
     else:
-        mkdir(app.config['STORAGE_PATH'])
+        print("Creating a storage: " + storage)
+        mkdir(storage)
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
@@ -44,7 +46,7 @@ def create_app():
 
     # Schedule daily cleanup
     scheduler = BackgroundScheduler()
-    scheduler.add_job(func=cleanup, args=[app.config['STORAGE_PATH']], trigger='cron', hour='2')
+    scheduler.add_job(func=total_cleanup, args=[storage], trigger='cron', hour='2')
     scheduler.start()
 
     # Shut down the scheduler when exiting the app
@@ -64,5 +66,8 @@ def configure_app(app):
         print("Invalid configuration name. Use 'base' instead.")
         app.config.from_object(config_name['base'])
 
-def cleanup(storage):
-    return rmtree(storage + '/*')
+def total_cleanup(storage):
+    for f in listdir(storage):
+        print('Remove ' + f)
+        rmtree(path.join(storage, f))
+    return
