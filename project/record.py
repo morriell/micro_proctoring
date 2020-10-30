@@ -19,7 +19,7 @@ def profile():
     session_data = Sessions.query.filter_by(user=current_user.id, stop=None).first()
     if(session_data is not None):
         session=session_data.session
-        session_data.stop = datetime.utcnow()
+        session_data.stop = datetime.now()
         session_data.comment = 'Closed due to page reload'
         db.session.commit()
     return render_template('profile.html', name=current_user.name, session=session)
@@ -34,20 +34,22 @@ def recieve_photo():
     time_left = current_session.start \
                 + timedelta(seconds=app.config['MAX_RECORD_LENGTH']) \
                 - datetime.now()
+
+    # Restrict maximum record length
+    if(time_left <= timedelta(seconds=1)):
+        print('TIME IS OVER')
+        return jsonify(status='error',
+                       msg='Кончилось максимально время записи',
+                       redirect=url_for('record.stop_record'))
+
+
     full_folder_name = app.config['STORAGE_PATH'] + '/' + current_session.session
 
     # Save image
     img_name = full_folder_name + '/' + datetime.now().strftime('%H-%M-%S-%d%m%y') + '.png'
     request.files['photo'].save(img_name)
 
-    # Restrict maximum record length
-    #if(time_left <= timedelta(seconds=1)):
-    #    print('time left ' + time_left)
-    #    print('timedelta ' + timedelta(seconds=1))
-    #    print('TIME IS OVER')
-    #    return redirect(url_for('record.stop_record'))
-
-    return jsonify(status="success")
+    return jsonify(status="success", time_left=str(time_left))
 
 @record.route('/start_record')
 @login_required
@@ -63,7 +65,7 @@ def start_record():
         os.mkdir(full_folder_name)
 
         # update DB
-        new_session = Sessions(user=user, session=folder, start=datetime.utcnow())
+        new_session = Sessions(user=user, session=folder, start=datetime.now())
         db.session.add(new_session)
         db.session.commit()
     else:
@@ -92,7 +94,7 @@ def stop_record():
     checksum = sha224(file_as_bytes(open(archive_name, 'rb'))).hexdigest()
 
     # Update DB
-    session_data.stop = datetime.utcnow()
+    session_data.stop = datetime.now()
     session_data.checksum = checksum
     db.session.commit()
 
