@@ -80,13 +80,32 @@ def start_record():
 def stop_record():
     session_data = Sessions.query.filter_by(user=current_user.id, stop=None).first()
     if (session_data is None):
-        print('ERERRR')
         return jsonify(status='error')
     folder_id = session_data.session
     path = app.config['STORAGE_PATH'] + '/' + folder_id
     archive_name = path + '/' + current_user.name \
                    + '-' + datetime.now().strftime('%M-%H-%d%m%y')\
                    + '.zip'
+
+    # Check time between photoes
+    valid = True
+    comment = ''
+    gap = app.config['PHOTO_MAX_GAP'] - app.config['PHOTO_MIN_GAP']
+    max_timedelta = timedelta(seconds=gap)
+    gap_factor = app.config['GAP_FACTOR']
+
+    photoes = os.listdir(path)
+    photoes.sort(key=lambda s: os.path.getmtime(os.path.join(path,s)))
+    for i in range(len(photoes)-1):
+        photo = os.path.join(path, photoes[i])
+        photo_next = os.path.join(path, photoes[i+1])
+        time_diff = timedelta( seconds = os.path.getmtime(os.path.join(path, photoes[i+1]))
+                             - os.path.getmtime(os.path.join(path, photoes[i])))
+        print('DIFF: '+str(time_diff))
+        if (time_diff > max_timedelta * gap_factor):
+            valid = False
+            #comment += photoes[i] + ' - ' + photoes[i+1]
+    print('VALID: '+ str(valid))
 
     # Make an archive
     os.system('zip -rm ' + archive_name + ' ' + path + '/*')
@@ -96,6 +115,8 @@ def stop_record():
     # Update DB
     session_data.stop = datetime.now()
     session_data.checksum = checksum
+    session_data.valid = valid
+    session_data.comment = comment
     db.session.commit()
 
     link = url_for('record.download', folder_name=folder_id, _external=True)

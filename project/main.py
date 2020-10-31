@@ -32,7 +32,8 @@ def check_hash(checksum):
                    start_time=start_time,
                    stop_date=stop_date,
                    stop_time=stop_time,
-                   user_name=user.name)
+                   user_name=user.name,
+                   valid=current_session.valid)
 
 @main.route('/how_it_works')
 def how_it_works():

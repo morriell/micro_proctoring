@@ -14,6 +14,7 @@ class BaseConfig(object):
     MAX_RECORD_LENGTH = 3*60*60 #3h in seconds
     PHOTO_MAX_GAP = 30 # 20seconds -- not more than 3 photo a minute
     PHOTO_MIN_GAP = 20
+    GAP_FACTOR = 1.5 # acceptable timedelta deviation
 
 class DevelopConfig(BaseConfig):
     SERVER_NAME = 'localhost:5000'
