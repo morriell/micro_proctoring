@@ -38,10 +38,7 @@ def recieve_photo():
     # Restrict maximum record length
     if(time_left <= timedelta(seconds=1)):
         print('TIME IS OVER')
-        return jsonify(status='error',
-                       msg='Кончилось максимально время записи',
-                       redirect=url_for('record.stop_record'))
-
+        return jsonify(status='end_record')
 
     full_folder_name = app.config['STORAGE_PATH'] + '/' + current_session.session
 
