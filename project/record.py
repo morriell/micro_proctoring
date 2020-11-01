@@ -46,7 +46,7 @@ def recieve_photo():
     img_name = full_folder_name + '/' + datetime.now().strftime('%H-%M-%S-%d%m%y') + '.png'
     request.files['photo'].save(img_name)
 
-    return jsonify(status="success", time_left=str(time_left).split('.').[0])
+    return jsonify(status="success", time_left=str(time_left).split('.')[0])
 
 @record.route('/start_record')
 @login_required
