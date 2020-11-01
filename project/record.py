@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from random import choice
 from string import digits, ascii_letters
 import os
-from hashlib import sha224
+from hashlib import sha256
 from re import match
 
 record = Blueprint('record', __name__)
@@ -87,7 +87,7 @@ def stop_record():
     # Check time between photoes
     valid = True
     comment = ''
-    gap = app.config['PHOTO_MAX_GAP'] - app.config['PHOTO_MIN_GAP']
+    gap = app.config['PHOTO_MAX_GAP']
     max_timedelta = timedelta(seconds=gap)
     gap_factor = app.config['GAP_FACTOR']
 
@@ -107,7 +107,7 @@ def stop_record():
     # Make an archive
     os.system('zip -rm ' + archive_name + ' ' + path + '/*')
 
-    checksum = sha224(file_as_bytes(open(archive_name, 'rb'))).hexdigest()
+    checksum = sha256(file_as_bytes(open(archive_name, 'rb'))).hexdigest()
 
     # Update DB
     session_data.stop = datetime.now()
