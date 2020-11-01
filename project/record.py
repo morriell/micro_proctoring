@@ -30,6 +30,7 @@ def recieve_photo():
     current_session = Sessions.query.filter_by(user=current_user.id, stop=None).first()
     if (current_session is None):
         return jsonify(status='error', err_text='no_session')
+        print('user ' + str(current_session.user) + ': attempt to record. Error')
 
     time_left = current_session.start \
                 + timedelta(seconds=app.config['MAX_RECORD_LENGTH']) \
@@ -37,14 +38,16 @@ def recieve_photo():
 
     # Restrict maximum record length
     if(time_left <= timedelta(seconds=1)):
-        print('TIME IS OVER')
         return jsonify(status='end_record')
+        print('user ' + str(current_session.user) + ': Time expired')
 
     full_folder_name = app.config['STORAGE_PATH'] + '/' + current_session.session
 
     # Save image
     img_name = full_folder_name + '/' + datetime.now().strftime('%H-%M-%S-%d%m%y') + '.png'
     request.files['photo'].save(img_name)
+
+    print('user ' + str(current_session.user) + ': Saved image: ' + img_name)
 
     return jsonify(status="success", time_left=str(time_left).split('.')[0])
 
@@ -65,6 +68,7 @@ def start_record():
         new_session = Sessions(user=user, session=folder, start=datetime.now())
         db.session.add(new_session)
         db.session.commit()
+        print('user [none]: Start session: Error')
     else:
         return jsonify(status="error", err_text='record_exists')
     return jsonify(status="success",
@@ -78,6 +82,8 @@ def stop_record():
     session_data = Sessions.query.filter_by(user=current_user.id, stop=None).first()
     if (session_data is None):
         return jsonify(status='error')
+    print('user ' + str(session_data.user) + ': stops session')
+
     folder_id = session_data.session
     path = app.config['STORAGE_PATH'] + '/' + folder_id
     archive_name = path + '/' + current_user.name \
@@ -98,11 +104,10 @@ def stop_record():
         photo_next = os.path.join(path, photoes[i+1])
         time_diff = timedelta( seconds = os.path.getmtime(os.path.join(path, photoes[i+1]))
                              - os.path.getmtime(os.path.join(path, photoes[i])))
-        print('DIFF: '+str(time_diff))
         if (time_diff > max_timedelta * gap_factor):
             valid = False
             #comment += photoes[i] + ' - ' + photoes[i+1]
-    print('VALID: '+ str(valid))
+    print('user ' + str(session_data.user) + ': check gaps between photoes: '+ str(valid))
 
     # Make an archive
     os.system('zip -rm ' + archive_name + ' ' + path + '/*')
@@ -117,8 +122,8 @@ def stop_record():
     db.session.commit()
 
     link = url_for('record.download', folder_name=folder_id, _external=True)
-    print('LINK ' + link)
-    print('HASH ' + checksum)
+    print('user '+ str(session_data.user) + ': Created an archive: '+ str(link))
+    print('user '+ str(session_data.user) + ': SHA256: '+ str(checksum))
 
     return jsonify(status='success', link=link, hash_sum=checksum)
 
@@ -126,11 +131,9 @@ def stop_record():
 def download(folder_name):
     path = os.path.join(app.root_path, '../', app.config['STORAGE_PATH'], folder_name)
     files = []
-    print(os.listdir(path))
     for f in os.listdir(path):
         if (match(r'.*\.zip', f)):
             files.append(f)
-    print(files)
     full_path = os.path.join(path, files[0])
     if (not os.path.exists(full_path)):
         return jsonify(status='error')

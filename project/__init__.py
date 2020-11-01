@@ -15,11 +15,18 @@ def create_app():
     configure_app(app)
     db.init_app(app)
     storage = app.config['STORAGE_PATH']
+    logfolder = app.config['LOG_FOLDER']
     if (path.exists(storage)):
         print('Storage ' + storage + ' already exists.')
     else:
         print("Creating a storage: " + storage)
         mkdir(storage)
+
+    if (path.exists(storage)):
+        print('Log folder ' + logfolder + ' already exists.')
+    else:
+        print("Creating a log folder: " + logfolder)
+        mkdir(logfolder)
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'

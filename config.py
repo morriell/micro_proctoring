@@ -11,6 +11,7 @@ class BaseConfig(object):
     SECURITY_PASSWORD_SALT = 'secret_key2'
     SQLALCHEMY_DATABASE_URI = 'sqlite:///db.sqlite'
     STORAGE_PATH = './storage'
+    LOG_FOLDER = './log'
     MAX_RECORD_LENGTH = 3*60*60 #3h in seconds
     PHOTO_MAX_GAP = 30 # 20seconds -- not more than 3 photo a minute
     PHOTO_MIN_GAP = 20
