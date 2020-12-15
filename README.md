@@ -1,6 +1,16 @@
 # Micro Proctoring
 
+This is a server of microproctoring service. It's been written on `flask` and uses `uwsgi` for deploy.
+The frontend part is stored in a separate repo. It's been written on `react`.
+
+To make the things work you need:
+1. Install and run microproctoring server. (It's described below)
+2. Compile frontend part using react
+3. Place \*.js files got from the previous step to the static folder on server. Update index.html of the server using index.html compiled by react.
+
 ## Prerequirements:
+
+- Ubuntu 20. _(Other systems are also possible, but there may be some issues)_
 
 Firstly install
 
